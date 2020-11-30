@@ -8,7 +8,7 @@ const LOCAL_URL2 =
 	'file:///C:/Users/moran/Documents/GitHub/scraping-final/onion2.html';
 const REAL_URL = 'http://nzxj65x32vh2fkhk.onion/all';
 
-(async () => {
+const scraper = (async () => {
 	let data = await readFile('data.json', 'utf8');
 	let latestDate = 0;
 
@@ -22,6 +22,7 @@ const REAL_URL = 'http://nzxj65x32vh2fkhk.onion/all';
 	} else {
 		data = [];
 	}
+
 	const browser = await puppeteer.launch({
 		headless: false,
 		args: ['--proxy-server=socks5://127.0.0.1:9050'],
@@ -62,10 +63,13 @@ const REAL_URL = 'http://nzxj65x32vh2fkhk.onion/all';
 
 		pastesArr.push(results);
 	}
-	pastesArr = pastesArr.filter((paste) => {
-		return paste.date > latestDate;
-	});
-	data.push(...pastesArr);
+	pastesArr = pastesArr
+		.filter((post) => {
+			return post.date > latestDate;
+		})
+		.sort((postA, postB) => postB.date - postA.date);
+	data.unshift(...pastesArr);
+
 	await writeFile('data.json', '');
 	await writeFile('data.json', JSON.stringify(data));
 
