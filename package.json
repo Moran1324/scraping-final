@@ -1,24 +1,26 @@
 {
-  "name": "scraping-final",
-  "version": "1.0.0",
-  "description": "",
-  "main": "thorScraper.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Moran1324/scraping-final.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/Moran1324/scraping-final/issues"
-  },
-  "homepage": "https://github.com/Moran1324/scraping-final#readme",
-  "dependencies": {
-    "nodemon": "^2.0.6",
-    "puppeteer": "^5.5.0"
-  }
+	"name": "scraping-final",
+	"version": "1.0.0",
+	"description": "",
+	"main": "thorScraper.js",
+	"scripts": {
+		"dev": "nodemon thorScraper",
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Moran1324/scraping-final.git"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"bugs": {
+		"url": "https://github.com/Moran1324/scraping-final/issues"
+	},
+	"homepage": "https://github.com/Moran1324/scraping-final#readme",
+	"dependencies": {
+		"nodemon": "^2.0.6",
+		"puppeteer": "^5.5.0",
+		"uuid": "^8.3.1"
+	}
 }
