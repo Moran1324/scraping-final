@@ -47,13 +47,21 @@ const scrapeData = async () => {
 			const pasteTitle = await row.$('div[class="col-sm-5"] > h4');
 
 			const propertyTitle = await pasteTitle.getProperty('innerText');
-			const jsonPropertyTitle = await propertyTitle.jsonValue();
+			let jsonPropertyTitle = await propertyTitle.jsonValue();
+			jsonPropertyTitle = jsonPropertyTitle
+				.split(' ')
+				.filter((word) => word !== '' || word !== String.fromCharCode(160))
+				.join(' ');
 			results.title = jsonPropertyTitle;
 
 			await page.waitForSelector('div[class="text"]');
 			const pasteContent = await row.$('div[class="text"]');
 			const propertyContent = await pasteContent.getProperty('innerText');
-			const jsonPropertyContent = await propertyContent.jsonValue();
+			let jsonPropertyContent = await propertyContent.jsonValue();
+			jsonPropertyContent = jsonPropertyContent
+				.split(' ')
+				.filter((word) => word !== '' || word !== String.fromCharCode(160))
+				.join(' ');
 			results.content = jsonPropertyContent;
 
 			const pasteDateAuthor = await row.$('div[class="col-sm-6"]');
@@ -73,21 +81,34 @@ const scrapeData = async () => {
 			.sort((postA, postB) => postB.date - postA.date);
 		data.unshift(...pastesArr);
 
+		// data.forEach((post) => {
+		// 	post.content = post.content
+		// 		.split(' ')
+		// 		.filter(
+		// 			(word) =>
+		// 				word !== '' || word !== String.fromCharCode(160)
+		// 		)
+		// 		.join('');
+		// });
 		await writeFile('data.json', '');
 		await writeFile('data.json', JSON.stringify(data));
 
 		console.log(
-			'new posts count ======================================================',
-			pastesArr.length
+			`date: ${new Date()
+				.toISOString()
+				.split('T')[0]
+				.split('-')
+				.reverse()
+				.join('/')}`
 		);
-		console.log(
-			'updated data count ======================================================',
-			data.length
-		);
+		console.log(`at: ${new Date().toISOString().split('T')[1].split('.')[0]}`);
+		console.log('new posts count: ', pastesArr.length);
+		console.log('updated data count: ', data.length);
 
 		await browser.close();
 		return true;
 	} catch (err) {
+		console.log(err);
 		return false;
 	}
 };
@@ -96,7 +117,7 @@ const timeout = (ms) => {
 	return new Promise((resolve) => setTimeout(resolve, ms));
 };
 
-const scrapeInterval = async (lastScrape = true, ms = 1000 * 60 * 5) => {
+const scrapeInterval = async (lastScrape = true, ms = 1000 * 60 * 2) => {
 	// defaluts to 5 minutes
 	const isScraped = await scrapeData();
 	if (lastScrape) {
