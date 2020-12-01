@@ -4,7 +4,9 @@
 	"description": "",
 	"main": "thorScraper.js",
 	"scripts": {
-		"dev": "nodemon thorScraper",
+		"dev": "nodemon index",
+		"scrape": "node thorScraper",
+		"all": "nodemon index && node thorScraper",
 		"test": "echo \"Error: no test specified\" && exit 1"
 	},
 	"repository": {
@@ -19,6 +21,7 @@
 	},
 	"homepage": "https://github.com/Moran1324/scraping-final#readme",
 	"dependencies": {
+		"express": "^4.17.1",
 		"nodemon": "^2.0.6",
 		"puppeteer": "^5.5.0",
 		"uuid": "^8.3.1"
