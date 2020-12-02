@@ -1,6 +1,5 @@
 require('dotenv').config();
 const puppeteer = require('puppeteer');
-const { v4: uuidv4 } = require('uuid');
 const Post = require('./models/Post');
 const timeStamp = require('./helpers/timeStamp');
 
@@ -34,8 +33,6 @@ const scrapeData = async () => {
 		let pastesArr = [];
 		for (let row of pastesDiv) {
 			const results = {};
-
-			results.id = uuidv4();
 
 			await page.waitForSelector('div[class="col-sm-5"] > h4');
 			const pasteTitle = await row.$('div[class="col-sm-5"] > h4');
@@ -110,7 +107,7 @@ const scrapeInterval = async (lastScrape = true, ms = 1000 * 60 * 2) => {
 	} else {
 		console.log(`run again in ${ms / 1000 / 60} minutes`);
 		await timeout(ms);
-		return scrapeInterval(isScraped, 1000 * 60 * 30); // called after 1/2 hour to prevent overload on server
+		return scrapeInterval(isScraped, 1000 * 60 * 10); // called after 1/2 hour to prevent overload on server
 	}
 };
 scrapeInterval();
