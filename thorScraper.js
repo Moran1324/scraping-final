@@ -44,7 +44,10 @@ const scrapeData = async () => {
 			let jsonPropertyTitle = await propertyTitle.jsonValue();
 			jsonPropertyTitle = jsonPropertyTitle
 				.split(' ')
-				.filter((word) => word !== '' || word !== String.fromCharCode(160))
+				.filter(
+					(word) =>
+						word !== '' || word !== ' ' || word !== String.fromCharCode(160)
+				)
 				.join(' ');
 			results.title = jsonPropertyTitle;
 
@@ -54,7 +57,10 @@ const scrapeData = async () => {
 			let jsonPropertyContent = await propertyContent.jsonValue();
 			jsonPropertyContent = jsonPropertyContent
 				.split(' ')
-				.filter((word) => word !== '' || word !== String.fromCharCode(160))
+				.filter(
+					(word) =>
+						word !== '' || word !== ' ' || word !== String.fromCharCode(160)
+				)
 				.join(' ');
 			results.content = jsonPropertyContent;
 
