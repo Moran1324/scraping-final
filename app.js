@@ -1,6 +1,8 @@
 const express = require('express');
 const { readFile } = require('fs').promises;
 const app = express();
+const Post = require('./models/Post');
+const scraper = require('./thorScraper');
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -18,12 +20,18 @@ app.use(logger);
 
 // get endpoint
 app.get('/api/posts', async (req, res, next) => {
-	// await scrapeData();
-	let data = await readFile('data.json', 'utf8');
-	data = JSON.parse(data);
+	let data = await Post.find();
 	res.json({ data });
 	// don't forget: catch((error) => next(error));
 });
+
+// app.get('/api/posts', async (req, res, next) => {
+// 	// await scrapeData();
+// 	let data = await readFile('data.json', 'utf8');
+// 	data = JSON.parse(data);
+// 	res.json({ data });
+// 	// don't forget: catch((error) => next(error));
+// });
 
 /// ERRORS SECTION
 

@@ -1,31 +1,25 @@
+require('dotenv').config();
 const puppeteer = require('puppeteer');
-const { readFile, writeFile } = require('fs').promises;
 const { v4: uuidv4 } = require('uuid');
+const Post = require('./models/Post');
+const timeStamp = require('./helpers/timeStamp');
 
 const LOCAL_URL =
 	'file:///C:/Users/moran/Documents/GitHub/scraping-final/onion.html';
+
 const LOCAL_URL2 =
 	'file:///C:/Users/moran/Documents/GitHub/scraping-final/onion2.html';
-const REAL_URL = 'http://nzxj65x32vh2fkhk.onion/all';
+
+const REAL_URL = process.env.SCRAPE_URL;
 
 const scrapeData = async () => {
 	try {
-		let data = await readFile('data.json', 'utf8');
-		let latestDate = 0;
-
-		if (data.length) {
-			data = JSON.parse(data);
-			data.forEach((paste) => {
-				if (paste.date > latestDate) {
-					latestDate = paste.date;
-				}
-			});
-		} else {
-			data = [];
-		}
+		const postsCount = await Post.find().countDocuments();
+		const latestPost = await Post.find().sort({ date: -1 }).limit(1);
+		const latestDate = latestPost.date;
 
 		const browser = await puppeteer.launch({
-			headless: false,
+			// headless: false,
 			args: ['--proxy-server=socks5://127.0.0.1:9050'],
 		});
 
@@ -47,13 +41,21 @@ const scrapeData = async () => {
 			const pasteTitle = await row.$('div[class="col-sm-5"] > h4');
 
 			const propertyTitle = await pasteTitle.getProperty('innerText');
-			const jsonPropertyTitle = await propertyTitle.jsonValue();
+			let jsonPropertyTitle = await propertyTitle.jsonValue();
+			jsonPropertyTitle = jsonPropertyTitle
+				.split(' ')
+				.filter((word) => word !== '' || word !== String.fromCharCode(160))
+				.join(' ');
 			results.title = jsonPropertyTitle;
 
 			await page.waitForSelector('div[class="text"]');
 			const pasteContent = await row.$('div[class="text"]');
 			const propertyContent = await pasteContent.getProperty('innerText');
-			const jsonPropertyContent = await propertyContent.jsonValue();
+			let jsonPropertyContent = await propertyContent.jsonValue();
+			jsonPropertyContent = jsonPropertyContent
+				.split(' ')
+				.filter((word) => word !== '' || word !== String.fromCharCode(160))
+				.join(' ');
 			results.content = jsonPropertyContent;
 
 			const pasteDateAuthor = await row.$('div[class="col-sm-6"]');
@@ -71,19 +73,14 @@ const scrapeData = async () => {
 				return post.date > latestDate;
 			})
 			.sort((postA, postB) => postB.date - postA.date);
-		data.unshift(...pastesArr);
+		// data.unshift(...pastesArr);
+		if (pastesArr.length > 0) {
+			await Post.insertMany(pastesArr);
+		}
 
-		await writeFile('data.json', '');
-		await writeFile('data.json', JSON.stringify(data));
-
-		console.log(
-			'new posts count ======================================================',
-			pastesArr.length
-		);
-		console.log(
-			'updated data count ======================================================',
-			data.length
-		);
+		console.log(`finished scrape at: ${timeStamp(Date.now())}`);
+		console.log('new posts count: ', pastesArr.length);
+		console.log('updated data count: ', postsCount);
 
 		await browser.close();
 		return true;
@@ -96,8 +93,9 @@ const timeout = (ms) => {
 	return new Promise((resolve) => setTimeout(resolve, ms));
 };
 
-const scrapeInterval = async (lastScrape = true, ms = 1000 * 60 * 5) => {
-	// defaluts to 5 minutes
+const scrapeInterval = async (lastScrape = true, ms = 1000 * 60 * 2) => {
+	console.log(`started scrape at: ${timeStamp(Date.now())}`);
+	// defaluts to 2 minutes
 	const isScraped = await scrapeData();
 	if (lastScrape) {
 		console.log(`run again in ${ms / 1000 / 60} minutes`);
