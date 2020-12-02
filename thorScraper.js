@@ -20,7 +20,7 @@ const scrapeData = async () => {
 
 		const browser = await puppeteer.launch({
 			// headless: false,
-			args: ['--proxy-server=socks5://127.0.0.1:9050'],
+			args: ['--proxy-server=socks5://tor:9050', '--no-sandbox'],
 		});
 
 		const page = await browser.newPage();
@@ -109,6 +109,7 @@ const timeout = (ms) => {
 };
 
 const scrapeInterval = async (lastScrape = true, ms = 1000 * 60 * 2) => {
+	await timeout(1000 * 10);
 	console.log(`started scrape at: ${timeStamp(Date.now())}`);
 	// defaluts to 2 minutes
 	const isScraped = await scrapeData();

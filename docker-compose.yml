@@ -1,0 +1,30 @@
+version: '3.1'
+
+services:
+  tor:
+    image: dperson/torproxy
+    restart: unless-stopped
+    ports:
+      - '9050:9050'
+      - '8118:8118'
+    networks:
+      - 'fullstackScraper'
+  scrape-server:
+    build:
+      context: '.'
+      dockerfile: DockerFile
+
+    ports:
+      - '8080:8080'
+    volumes:
+      - type: bind
+        source: ./
+        target: /scrape-server
+    networks:
+      - 'fullstackScraper'
+    depends_on:
+      - tor
+
+networks:
+  fullstackScraper:
+    driver: bridge
