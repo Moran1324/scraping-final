@@ -98,6 +98,7 @@ const scrapeData = async () => {
 		await browser.close();
 		return true;
 	} catch (err) {
+		console.log('there was an error: ', err.message);
 		return false;
 	}
 };

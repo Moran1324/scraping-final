@@ -1,8 +1,7 @@
 const express = require('express');
-const { readFile } = require('fs').promises;
 const app = express();
 const Post = require('./models/Post');
-const scraper = require('./thorScraper');
+require('./thorScraper');
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
