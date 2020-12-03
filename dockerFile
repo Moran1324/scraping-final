@@ -18,6 +18,8 @@ RUN npm un puppeteer
 
 RUN npm install puppeteer@2.0.0
 
+ENV IS_DOCKER=true
+
 COPY . . 
 
 EXPOSE 8080

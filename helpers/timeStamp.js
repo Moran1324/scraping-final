@@ -4,5 +4,5 @@ module.exports = (date) => {
 		.split('T')[0]
 		.split('-')
 		.reverse()
-		.join('/')}, ${new Date().toISOString().split('T')[1].split('.')[0]}`;
+		.join('/')}, ${new Date(date).toISOString().split('T')[1].split('.')[0]}`;
 };

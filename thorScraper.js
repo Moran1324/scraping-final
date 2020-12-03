@@ -11,16 +11,20 @@ const timeStamp = require('./helpers/timeStamp');
 
 const REAL_URL = process.env.SCRAPE_URL;
 
+const args = process.env.IS_DOCKER
+	? ['--proxy-server=socks5://tor:9050', '--no-sandbox']
+	: ['--proxy-server=socks5://127.0.0.1:9050'];
+
 const scrapeData = async () => {
 	try {
 		// for later use, to filter posts and prevent duplicates
-		const postsCount = await Post.find().countDocuments();
-		const latestPost = await Post.find().sort({ date: -1 }).limit(1);
-		const latestDate = latestPost.date;
+		const latestPost = await Post.find().sort('-date').limit(1);
+		const latestDate = latestPost[0].date;
+		console.log('latest post: ', timeStamp(latestDate));
 
 		const browser = await puppeteer.launch({
-			// headless: false,
-			args: ['--proxy-server=socks5://tor:9050', '--no-sandbox'],
+			headless: process.env.IS_DOCKER ? true : false,
+			args: args,
 		});
 
 		const page = await browser.newPage();
@@ -89,6 +93,8 @@ const scrapeData = async () => {
 		if (postsArr.length > 0) {
 			await Post.insertMany(postsArr);
 		}
+
+		const postsCount = await Post.find().countDocuments();
 
 		// logging info
 		console.log(`finished scrape at: ${timeStamp(Date.now())}`);
