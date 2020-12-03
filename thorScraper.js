@@ -16,70 +16,93 @@ const args = process.env.IS_DOCKER
 	: ['--proxy-server=socks5://127.0.0.1:9050'];
 
 const scrapeData = async () => {
+	// for later use, to filter posts and prevent duplicates
+	const latestPost = await Post.find().sort('-date').limit(1);
+	const latestDate = latestPost[0].date;
+	console.log('latest post: ', timeStamp(latestDate));
+
+	const browser = await puppeteer.launch({
+		headless: process.env.IS_DOCKER ? true : false,
+		args: args,
+	});
+
 	try {
-		// for later use, to filter posts and prevent duplicates
-		const latestPost = await Post.find().sort('-date').limit(1);
-		const latestDate = latestPost[0].date;
-		console.log('latest post: ', timeStamp(latestDate));
-
-		const browser = await puppeteer.launch({
-			headless: process.env.IS_DOCKER ? true : false,
-			args: args,
-		});
-
 		const page = await browser.newPage();
 		await page.goto(REAL_URL);
 
-		await page.waitForSelector('div[class="col-sm-12"]');
-		let postsDiv = await page.$$('div[class="col-sm-12"]');
-
-		postsDiv = postsDiv.slice(1, postsDiv.length - 1);
+		await page.waitForSelector(
+			'div[class="col-sm-12"] > ul[class=pagination] > li'
+		);
+		const pagesElements = await page.$$(
+			'div[class="col-sm-12"] > ul[class=pagination] > li'
+		);
+		// because forward and back buttons
+		const pagesCount = pagesElements.length - 2;
 
 		let postsArr = [];
-		for (let row of postsDiv) {
-			const results = {};
+		// loop through all pages
+		for (let j = 0; j < pagesCount; j++) {
+			await page.goto(`${REAL_URL}?page=${j + 1}`);
 
-			await page.waitForSelector('div[class="col-sm-5"] > h4');
-			const pasteTitle = await row.$('div[class="col-sm-5"] > h4');
+			await page.waitForSelector('div[class="col-sm-12"]');
+			let postsDiv = await page.$$('div[class="col-sm-12"]');
 
-			// getting title element
-			const propertyTitle = await pasteTitle.getProperty('innerText');
-			let jsonPropertyTitle = await propertyTitle.jsonValue(); // convert it to json
-			// filter unnecessary spaces
-			jsonPropertyTitle = jsonPropertyTitle
-				.split(' ')
-				.filter(
-					(word) =>
-						word !== '' || word !== ' ' || word !== String.fromCharCode(160)
-				)
-				.join(' ');
-			results.title = jsonPropertyTitle;
+			postsDiv = postsDiv.slice(1, postsDiv.length - 1);
 
-			// getting content element
-			await page.waitForSelector('div[class="text"]');
-			const pasteContent = await row.$('div[class="text"]');
-			const propertyContent = await pasteContent.getProperty('innerText');
-			let jsonPropertyContent = await propertyContent.jsonValue();
-			// filter unnecessary spaces
-			jsonPropertyContent = jsonPropertyContent
-				.split(' ')
-				.filter(
-					(word) =>
-						word !== '' || word !== ' ' || word !== String.fromCharCode(160)
-				)
-				.join(' ');
-			results.content = jsonPropertyContent;
+			// loop through posts and get info out of them
+			for (let [i, row] of postsDiv.entries()) {
+				const results = {};
 
-			// getting date and writer element
-			const pasteDateAuthor = await row.$('div[class="col-sm-6"]');
-			const propertyDateAuthor = await pasteDateAuthor.getProperty('innerText');
-			const jsonPropertyDateAuthor = await propertyDateAuthor.jsonValue();
-			results.author = jsonPropertyDateAuthor.split(' at ')[0].split(' ')[2];
-			results.date = new Date(
-				jsonPropertyDateAuthor.split(' at ')[1]
-			).getTime();
+				await page.waitForSelector('div[class="col-sm-5"] > h4');
+				const postTitle = await row.$('div[class="col-sm-5"] > h4');
 
-			postsArr.push(results);
+				// getting title element
+				const propertyTitle = await postTitle.getProperty('innerText');
+				let jsonPropertyTitle = await propertyTitle.jsonValue(); // convert it to json
+				// filter unnecessary spaces
+				jsonPropertyTitle = jsonPropertyTitle
+					.split(' ')
+					.filter(
+						(word) =>
+							word !== '' || word !== ' ' || word !== String.fromCharCode(160)
+					)
+					.join(' ');
+				results.title = jsonPropertyTitle;
+
+				// getting content element
+				await page.waitForSelector(
+					'div[class="text"]' || 'div[class="actionscript"]'
+				);
+				let postContent = await row.$('div[class="text"]');
+				if (!postContent) {
+					console.log(`post # ${i + 1}`, postContent);
+					postContent = await (await row.$$('div'))[1];
+				}
+				const propertyContent = await postContent.getProperty('textContent');
+				let jsonPropertyContent = await propertyContent.jsonValue();
+				// filter unnecessary spaces
+				jsonPropertyContent = jsonPropertyContent
+					.split(' ')
+					.filter(
+						(word) =>
+							word !== '' || word !== ' ' || word !== String.fromCharCode(160)
+					)
+					.join(' ');
+				results.content = jsonPropertyContent;
+
+				// getting date and writer element
+				const pasteDateAuthor = await row.$('div[class="col-sm-6"]');
+				const propertyDateAuthor = await pasteDateAuthor.getProperty(
+					'innerText'
+				);
+				const jsonPropertyDateAuthor = await propertyDateAuthor.jsonValue();
+				results.author = jsonPropertyDateAuthor.split(' at ')[0].split(' ')[2];
+				results.date = new Date(
+					jsonPropertyDateAuthor.split(' at ')[1]
+				).getTime();
+
+				postsArr.push(results);
+			}
 		}
 
 		// filter posts to prevent duplicates
@@ -105,6 +128,7 @@ const scrapeData = async () => {
 		return true;
 	} catch (err) {
 		console.log('there was an error: ', err.message);
+		await browser.close();
 		return false;
 	}
 };

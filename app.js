@@ -20,7 +20,7 @@ app.use(logger);
 // get endpoint
 app.get('/api/posts', async (req, res, next) => {
 	let count = Post.countDocuments();
-	let data = await Post.find({}).sort("-date");
+	let data = await Post.find({}).sort('-date');
 	res.json({ data });
 	// don't forget: catch((error) => next(error));
 });
