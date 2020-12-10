@@ -12,7 +12,7 @@ services:
   scrape-server:
     build:
       context: '.'
-      dockerfile: DockerFile
+      dockerfile: Dockerfile
 
     ports:
       - '8081:8080'
